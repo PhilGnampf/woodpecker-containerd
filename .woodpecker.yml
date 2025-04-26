@@ -1,0 +1,9 @@
+kind: pipeline
+type: docker
+name: default
+
+steps:
+  - name: hello
+    image: alpine:latest
+    commands:
+      - echo "Hallo Woodpecker über containerd!"

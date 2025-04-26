@@ -1,39 +1,18 @@
 package containerd
 
 import (
-   "fmt"
    "os"
-   "path/filepath"
-
    "github.com/urfave/cli/v3"
 )
 
 // defaultContainerdEndpoint returns a sensible default endpoint for containerd
 // honoring user environment for rootless/containerd socket locations.
 func defaultContainerdEndpoint() string {
-   // respect explicit environment variable
+   // Respect explicit environment variable
    if env := os.Getenv("CONTAINERD_ENDPOINT"); env != "" {
        return env
    }
-   // check for user-level containerd socket in XDG_RUNTIME_DIR
-   if dir := os.Getenv("XDG_RUNTIME_DIR"); dir != "" {
-       path1 := filepath.Join(dir, "containerd", "containerd.sock")
-       if fi, err := os.Stat(path1); err == nil && !fi.IsDir() {
-           return path1
-       }
-       path2 := filepath.Join(dir, "containerd.sock")
-       if fi, err := os.Stat(path2); err == nil && !fi.IsDir() {
-           return path2
-       }
-   }
-   // check for systemd user socket location
-   if uid := os.Geteuid(); uid != 0 {
-       path3 := fmt.Sprintf("/run/user/%d/containerd/containerd.sock", uid)
-       if fi, err := os.Stat(path3); err == nil && !fi.IsDir() {
-           return path3
-       }
-   }
-   // fallback to system socket
+   // Default to the system containerd socket
    return "/run/containerd/containerd.sock"
 }
 
@@ -50,5 +29,11 @@ var Flags = []cli.Flag{
        Name:    "backend-containerd-namespace",
        Usage:   "containerd namespace to use",
        Value:   "default",
+   },
+   &cli.StringFlag{
+       Sources: cli.EnvVars("CONTAINERD_SNAPSHOTTER"),
+       Name:    "backend-containerd-snapshotter",
+       Usage:   "containerd snapshotter to use (e.g. overlayfs,fuse-overlayfs)",
+       Value:   "overlayfs",
    },
 }
